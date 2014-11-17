@@ -10,7 +10,7 @@ import moa.cluster.Clustering;
 import moa.cluster.SphereCluster;
 import moa.clusterers.KMeans;
 
-public class KMMAdapter implements ClusterProvider {
+public class KMeansAdapter implements ClusterProvider {
 
 	@Override
 	public Clustering kMeans(Instances data, int k, int maxIterations) {

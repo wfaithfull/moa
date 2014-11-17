@@ -9,7 +9,7 @@ public class Test {
 	
 	public static void main(String[] args) {
 		
-		ClusterProvider kmeans = new KMMAdapter();
+		ClusterProvider kmeans = new KMeansAdapter();
 		
 		SPLL logLL = new SPLL(kmeans, null);
 	}
