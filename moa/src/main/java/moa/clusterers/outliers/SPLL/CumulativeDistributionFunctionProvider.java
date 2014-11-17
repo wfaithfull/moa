@@ -1,5 +1,7 @@
 package moa.clusterers.outliers.SPLL;
 
-public interface ChiSquareDistributionProvider {
+public interface CumulativeDistributionFunctionProvider {
+	
 	double cumulativeProbability(double x, double df);
+	
 }
