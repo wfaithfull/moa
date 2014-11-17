@@ -11,7 +11,7 @@ import moa.cluster.InstanceRetainingCluster;
 import moa.cluster.Cluster;
 import moa.cluster.Clustering;
 import moa.clusterers.outliers.MyBaseOutlierDetector;
-import moa.clusterers.outliers.SPLL.ChiSquareDistributionProvider;
+import moa.clusterers.outliers.SPLL.CumulativeDistributionFunctionProvider;
 import moa.clusterers.outliers.SPLL.ClusterProvider;
 
 /**
@@ -33,7 +33,7 @@ public class SPLL extends MyBaseOutlierDetector {
     private int _numClusters;
 
     private ClusterProvider _clusterer;
-    private ChiSquareDistributionProvider _cdf;
+    private CumulativeDistributionFunctionProvider _cdf;
 
     //region Getters / Setters
 
@@ -55,7 +55,7 @@ public class SPLL extends MyBaseOutlierDetector {
 
     //endregion
 
-    public SPLL(ClusterProvider clusterer, ChiSquareDistributionProvider cdf) {
+    public SPLL(ClusterProvider clusterer, CumulativeDistributionFunctionProvider cdf) {
         _clusterer = clusterer;
         _cdf = cdf;
         _numClusters = DEFAULT_CLUSTERS;
