@@ -55,7 +55,7 @@ public class Test {
                 //myOutlierDetector.PrintOutliers();
             }
         }        
-        // myOutlierDetector.PrintOutliers();
+        myOutlierDetector.PrintOutliers();
         System.out.println("Total time = " + (System.currentTimeMillis() - tmStart) + " ms");
     }
 }
