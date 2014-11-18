@@ -2,6 +2,7 @@ package moa.clusterers.outliers.SPLL;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
@@ -35,8 +36,6 @@ public class SPLL extends MyBaseOutlierDetector {
     private ClusterProvider _clusterer;
     private CumulativeDistributionFunctionProvider _cdf;
 
-    //region Getters / Setters
-
     public long get_objId() {
         return _objId;
     }
@@ -53,14 +52,18 @@ public class SPLL extends MyBaseOutlierDetector {
         this._numClusters = _numClusters;
     }
 
-    //endregion
-
+    
     public SPLL(ClusterProvider clusterer, CumulativeDistributionFunctionProvider cdf) {
         _clusterer = clusterer;
         _cdf = cdf;
         _numClusters = DEFAULT_CLUSTERS;
     }
+    
+    public SPLL() {
+    	this(new KMeansAdapter(), new ChiSquareAdapter());
+    }
 
+    @Override
     public void Init() {
         _windowSize = windowSizeOption.getValue();
     }
@@ -75,16 +78,27 @@ public class SPLL extends MyBaseOutlierDetector {
         return start > MIN_OBJ_ID ? start : MIN_OBJ_ID;
     }
 
-    public void setModelContext(InstancesHeader header) {
-
+    @Override
+    public void ProcessNewStreamObj(Instance inst) {
+    	this.processNewInstanceImpl(inst);
     }
-
-    public void processNewInstance(Instance instance) {
-
+    
+    @Override
+    public void processNewInstanceImpl(Instance inst) {
+    	super.processNewInstanceImpl(inst);
     }
 
     public LikelihoodResult logLL(Instances w1, Instances w2) {
         Clustering clusters = _clusterer.kMeans(w1, _numClusters, MAX_ITERATIONS);
+        
+        ArrayList<Instance> w1conv = new ArrayList<Instance>();
+        for(int i=0;i<w1.numInstances();i++) {
+        	w1conv.add(w1.get(i));
+        }
+        
+        for(Entry<Integer, Integer> point : Clustering.classValues(w1conv).entrySet()){
+        	System.out.println(String.format("%d %d", point.getKey(), point.getValue()));
+        }
 
         List<Integer> classPriors = new ArrayList<Integer>();
         List<double[]> clusterMeans = new ArrayList<double[]>();
