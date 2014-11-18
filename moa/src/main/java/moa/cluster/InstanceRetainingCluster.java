@@ -23,6 +23,12 @@ public class InstanceRetainingCluster extends Cluster {
     public InstanceRetainingCluster() {
         this(new ArrayList<Instance>());
     }
+    
+    public InstanceRetainingCluster(Instance center) {
+    	_instances = new ArrayList<Instance>();
+    	_center = center;
+    	
+    }
 
     public InstanceRetainingCluster(List<Instance> instances) {
         _instances = instances;
@@ -56,6 +62,10 @@ public class InstanceRetainingCluster extends Cluster {
     @Override
     public double[] getCenter() {
         return _center.toDoubleArray();
+    }
+    
+    public Instance getCenterAsInstance() {
+    	return _center;
     }
 
     @Override
