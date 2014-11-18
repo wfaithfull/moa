@@ -3,10 +3,12 @@ package moa.clusterers.outliers.SPLL;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
 
 import moa.cluster.Cluster;
 import moa.cluster.Clustering;
+import moa.cluster.InstanceRetainingCluster;
 import moa.cluster.SphereCluster;
 import moa.clusterers.KMeans;
 
@@ -28,6 +30,12 @@ public class KMeansAdapter implements ClusterProvider {
 		}
 		
 		return KMeans.kMeans(centres, dataAsClusters);
+	}
+	
+	public List<InstanceRetainingCluster> kMeansPP(final List<? extends Instance> data, final int k){
+		
+		// TODO K Means Plus Plus
+		return null;
 	}
 
 }
