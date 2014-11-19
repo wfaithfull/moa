@@ -2,6 +2,7 @@ package moa.clusterers.outliers.SPLL;
 
 import java.io.StringReader;
 
+import com.github.javacliparser.FloatOption;
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
 
@@ -22,8 +23,8 @@ public class Test {
         RandomRBFGeneratorEvents stream = new RandomRBFGeneratorEvents();
         stream.prepareForUse();
 		
-		ClusterProvider kmeans = new KMeansAdapter();
-		CumulativeDistributionFunctionProvider cdf = new ChiSquareAdapter();
+		ClusterProvider kmeans = new ApacheKMeansAdapter();
+		CumulativeDistributionFunctionProvider cdf = new ApacheChiSquareAdapter();
 		
 		SPLL logLL = new SPLL(kmeans, cdf);
 		
@@ -33,8 +34,9 @@ public class Test {
         logLL.prepareForUse();  
         
         print("getting windows");
-        Instances w1 = getRandomWindow(50, stream);
-        Instances w2 = getRandomWindow(50, stream);
+        Instances w1 = getRandomWindow(5000, stream);
+        stream.noiseLevelOption = new FloatOption("noiseLevel", 'N', "Noise level", 0.7, 0.5, 1.0);
+        Instances w2 = getRandomWindow(5000, stream);
         
         print("logll");
         LikelihoodResult r = logLL.logLL(w1, w2);

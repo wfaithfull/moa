@@ -60,7 +60,7 @@ public class SPLL extends MyBaseOutlierDetector {
     }
     
     public SPLL() {
-    	this(new KMeansAdapter(), new ChiSquareAdapter());
+    	this(new ApacheKMeansAdapter(), new ChiSquareAdapter());
     }
 
     @Override
@@ -89,15 +89,11 @@ public class SPLL extends MyBaseOutlierDetector {
     }
 
     public LikelihoodResult logLL(Instances w1, Instances w2) {
-        Clustering clusters = _clusterer.kMeans(w1, _numClusters, MAX_ITERATIONS);
+        List<InstanceRetainingCluster> clusters = _clusterer.cluster(w1, _numClusters, MAX_ITERATIONS);
         
         ArrayList<Instance> w1conv = new ArrayList<Instance>();
         for(int i=0;i<w1.numInstances();i++) {
         	w1conv.add(w1.get(i));
-        }
-        
-        for(Entry<Integer, Integer> point : Clustering.classValues(w1conv).entrySet()){
-        	System.out.println(String.format("%d %d", point.getKey(), point.getValue()));
         }
 
         List<Integer> classPriors = new ArrayList<Integer>();
@@ -105,12 +101,15 @@ public class SPLL extends MyBaseOutlierDetector {
         List<double[]> clusterVariance = new ArrayList<double[]>();
 
         int totalObservations   = w1.numInstances();
-        int nFeatures           = clusters.dimension();
+        int nFeatures           = w1.get(0).toDoubleArray().length;
 
+        int clustern = 0; // DEBUG
+        int observationn = 0; // DEBUG
         // Calculate the REFERENCE distribution from Window 1
-        for(Cluster moacluster : clusters.getClustering()) {
-            InstanceRetainingCluster cluster = (InstanceRetainingCluster)moacluster;
-
+        for(InstanceRetainingCluster cluster : clusters) {
+        	
+        	
+        	
             int nObservations       = (int)cluster.getWeight();
             double[] center         = cluster.getCenter();
             double maxLikelihood    = 1 / nObservations;
@@ -128,9 +127,13 @@ public class SPLL extends MyBaseOutlierDetector {
                 for(int j=0;j<nFeatures; j++) {
                     variance[j] = Math.pow(observation[j] - center[j], 2) * maxLikelihood;
                 }
+                
+                System.out.println(String.format("Point %d, Cluster %d", observationn, clustern));
+                observationn++; //DEBUG
             }
 
             clusterVariance.add(variance);
+            clustern++; // DEBUG
         }
 
         /* Combine cluster variances into the final covariance matrix, weighted by priors.
@@ -214,6 +217,7 @@ public class SPLL extends MyBaseOutlierDetector {
         result.cStat = logLikelihoodTerm / totalObservations;
         
         double a = _cdf.cumulativeProbability(result.cStat, nFeatures);
+        System.out.println(a);
         double b = 1-a;
 
         result.pStat = a < b ? a : b;
