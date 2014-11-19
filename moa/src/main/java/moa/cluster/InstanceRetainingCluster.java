@@ -32,8 +32,13 @@ public class InstanceRetainingCluster extends Cluster {
 
     public InstanceRetainingCluster(List<Instance> instances) {
         _instances = instances;
-
-        int nAttr = instances.get(0).numAttributes();
+        
+        if(!_instances.isEmpty())
+    		_center = computeCenter(_instances);
+    }
+    
+    private static Instance computeCenter(List<Instance> instances) {
+    	int nAttr = instances.get(0).numAttributes();
 
         double[] center = new double[nAttr];
         for(Instance i : instances) {
@@ -48,7 +53,7 @@ public class InstanceRetainingCluster extends Cluster {
             center[i] = center[i] / nAttr;
         }
 
-        _center = new DenseInstance(1.0d, center);
+        return new DenseInstance(1.0d, center);
     }
 
     public List<Instance> getInstances() {
@@ -57,6 +62,7 @@ public class InstanceRetainingCluster extends Cluster {
 
     public void addInstance(Instance instance) {
         _instances.add(instance);
+    	_center = computeCenter(_instances);
     }
 
     @Override
