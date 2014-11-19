@@ -103,8 +103,6 @@ public class SPLL extends MyBaseOutlierDetector {
         int totalObservations   = w1.numInstances();
         int nFeatures           = w1.get(0).toDoubleArray().length;
 
-        int clustern = 0; // DEBUG
-        int observationn = 0; // DEBUG
         // Calculate the REFERENCE distribution from Window 1
         for(InstanceRetainingCluster cluster : clusters) {
         	
@@ -127,13 +125,9 @@ public class SPLL extends MyBaseOutlierDetector {
                 for(int j=0;j<nFeatures; j++) {
                     variance[j] = Math.pow(observation[j] - center[j], 2) * maxLikelihood;
                 }
-                
-                System.out.println(String.format("Point %d, Cluster %d", observationn, clustern));
-                observationn++; //DEBUG
             }
 
             clusterVariance.add(variance);
-            clustern++; // DEBUG
         }
 
         /* Combine cluster variances into the final covariance matrix, weighted by priors.
