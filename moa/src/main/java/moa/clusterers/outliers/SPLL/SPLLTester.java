@@ -14,7 +14,7 @@ import moa.streams.clustering.RandomRBFGeneratorEvents;
  * 
  * Test class for SPLL.
  */
-public class Test {
+public class SPLLTester {
 	
 	public static void main(String[] args) {
 		
