@@ -3,17 +3,14 @@ package moa.clusterers.outliers.SPLL;
 import java.util.ArrayList;
 import java.util.List;
 
+import moa.cluster.InstanceRetainingCluster;
+
 import org.apache.commons.math3.ml.clustering.CentroidCluster;
 import org.apache.commons.math3.ml.clustering.Clusterable;
 import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
 
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
-
-import moa.cluster.Cluster;
-import moa.cluster.Clustering;
-import moa.cluster.InstanceRetainingCluster;
-import moa.clusterers.KMeansPlusPlus;
 
 public class ApacheKMeansAdapter implements ClusterProvider {
 	
