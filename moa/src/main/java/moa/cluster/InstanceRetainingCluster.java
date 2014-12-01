@@ -27,7 +27,6 @@ public class InstanceRetainingCluster extends Cluster {
     public InstanceRetainingCluster(Instance center) {
     	_instances = new ArrayList<Instance>();
     	_center = center;
-    	
     }
 
     public InstanceRetainingCluster(List<Instance> instances) {
