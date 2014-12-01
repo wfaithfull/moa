@@ -9,6 +9,7 @@ import org.apache.commons.math3.ml.clustering.CentroidCluster;
 import org.apache.commons.math3.ml.clustering.Clusterable;
 import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
 
+import com.yahoo.labs.samoa.instances.DenseInstance;
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
 
@@ -52,7 +53,7 @@ public class ApacheKMeansAdapter implements ClusterProvider {
 		List<InstanceRetainingCluster> adaptedClusters = new ArrayList<InstanceRetainingCluster>();
 		
 		for(CentroidCluster<InstanceAdapter> cluster : clusters) {
-			InstanceRetainingCluster thisCluster = new InstanceRetainingCluster();
+			InstanceRetainingCluster thisCluster = new InstanceRetainingCluster(new DenseInstance(1, cluster.getCenter().getPoint()));
 			for (InstanceAdapter instanceAdapter : cluster.getPoints()) {
 				thisCluster.addInstance(instanceAdapter.getInstance());
 			}
