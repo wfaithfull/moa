@@ -2,6 +2,9 @@ package moa.classifiers.core.driftdetection.multivariate.SPLL;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 
 import moa.classifiers.core.driftdetection.multivariate.SPLL.SPLL.LikelihoodResult;
@@ -9,8 +12,8 @@ import moa.streams.generators.RandomRBFGeneratorDrift;
 
 import org.junit.Test;
 
+import com.yahoo.labs.samoa.instances.ArffLoader;
 import com.yahoo.labs.samoa.instances.DenseInstance;
-import com.yahoo.labs.samoa.instances.DenseInstanceData;
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
 
@@ -53,18 +56,28 @@ public class SPLLTest {
 	}
 	
 	@Test
-	public void testLogLLStatic() {
+	public void testLogLLStatic() throws IOException {
 
+		final int INSTANCES = 150; // Horrible, but no way to get #instances from ArffLoader!
+		
 		SPLL spll = new SPLL();
+		Reader reader = new FileReader("iris.arff");
+		
+		ArffLoader loader = new ArffLoader(reader);
+		Instances data = new Instances(new StringReader(""), INSTANCES);
+		
+		
+		for(int i=0; i<INSTANCES;i++) {
+			Instance inst = loader.readInstance();
+			data.add(inst);
+		}
 
-		double[] x = new double[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 };
-		Instance inst = makeInstance(x);
-		Instances insts = makeIdenticalInstances(inst, 10);
-		LikelihoodResult ll = spll.logLL(insts, insts);
+		LikelihoodResult ll = spll.logLL(data, data);
+		System.out.println(ll.cStat + " " + ll.pStat);
 		
 		assertEquals(false, ll.change);
-		assertEquals(0.2857, ll.cStat, 0.001);
-		assertEquals(1.1400, ll.pStat, 0.001);
+		assertEquals(0.0119002778, ll.cStat, 0.0000001);
+		assertEquals(0.0000008182, ll.pStat, 0.0000001);
 	}
 	
 	static Instances makeIdenticalInstances(Instance inst, int n) {
