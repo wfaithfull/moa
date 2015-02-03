@@ -1,9 +1,11 @@
 package moa.classifiers.core.driftdetection.multivariate.SPLL;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import moa.cluster.InstanceRetainingCluster;
+
 import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
 
@@ -55,9 +57,6 @@ public class SPLL {
             double[] center         = cluster.getCenter();
             double maxLikelihood    = 1 / nObservations;
 
-            //clusterMeans.add(center);
-            //classPriors.add(nObservations / totalObservations);
-
             List<Instance> data = cluster.getInstances();
             double[] variance = new double[nFeatures];
 
@@ -93,14 +92,20 @@ public class SPLL {
         return dist;
     }
 	
+	public void debugPrint (List<double[]> toPrint)
+	{
+		for(double[] row : toPrint)
+		{
+			System.out.println(Arrays.toString(row));
+		}
+	}
+	
     public LikelihoodResult logLL(Instances w1, Instances w2) {
+    	
+    	// Cluster w1 using injected clustering strategy
         List<InstanceRetainingCluster> clusters = getClusterer().cluster(w1, numClusters, maxIterations);
-        
-        ArrayList<Instance> w1conv = new ArrayList<Instance>();
-        for(int i=0;i<w1.numInstances();i++) {
-        	w1conv.add(w1.get(i));
-        }
 
+        // Calculate class priors by counting cluster membership
         List<Integer> classPriors = new ArrayList<Integer>();
         for(InstanceRetainingCluster cluster : clusters) {
 			classPriors.add((int)cluster.getWeight());
@@ -108,6 +113,12 @@ public class SPLL {
         
         List<double[]> clusterMeans = getClusterMeans(clusters);
         List<double[]> clusterVariance = getClusterVariance(clusters);
+        
+        System.out.println("Means");
+        debugPrint(clusterMeans);
+        System.out.println("------------------------------\nVariance");
+        debugPrint(clusterVariance);
+        System.out.println("------------------------------");
 
         int totalObservations   = w1.numInstances();
         int nFeatures           = w1.get(0).toDoubleArray().length;	
@@ -132,44 +143,11 @@ public class SPLL {
 	        if(cov != 0 && cov < minVariance)
                 minVariance = cov;
 	        
-	        finalCovariance[j][j] = cov;
+	        finalCovariance[j][j] = cov; // We can cheat and only do the diagonal
 	        featureVariance[j] = cov;
         }
-        /*
-        for(int i=0;i<totalObservations;i++) {
-            for(int j=0;j<nFeatures; j++) {
-                cov = 0;
-               
-                for(int k=0;k<clusters.size();k++) {
-                	// Don't think this is right. Need to know what cluster the ith
-                	// observation falls into.
-                	for(int n=0;n<clusters.get(k).getWeight();n++) {
-                		cov += classPriors.get(k) * clusterVariance.get(k)[n][j];
-                	}
-                }
-                finalCovariance[i][j] = cov;
-            }
-        }*/
 
-        //double[] featureVariance = new double[nFeatures];
         double[] reciprocalVariance = new double[nFeatures];
-        	
-        
-        
-        /*for(int j=0;j<nFeatures; j++) {
-            double total = 0;
-
-            for(int i=0;i<totalObservations; i++) {
-                total += finalCovariance[i][j];
-            }
-            double variance = total / totalObservations;
-
-            if(variance != 0 && variance < minVariance)
-                minVariance = variance;
-
-            featureVariance[j] = variance;
-
-        }*/
 
         for(int j=0;j<nFeatures;j++) {
             if(featureVariance[j] == 0)
@@ -189,23 +167,19 @@ public class SPLL {
 
             logLikelihoodTerm += minDist;
         }
-        LikelihoodResult result = new LikelihoodResult();
-        result.cStat = logLikelihoodTerm / totalObservations;
         
-        double a = getCdf().cumulativeProbability(result.cStat, nFeatures);
+        double negLL = logLikelihoodTerm / totalObservations;
+        
+        double a = getCdf().cumulativeProbability(negLL, nFeatures);
         double b = 1-a;
-
-        result.pStat = a < b ? a : b;
-
-        result.change = result.pStat < 0.05;
         
+        boolean change = negLL > nFeatures + Math.sqrt(2*nFeatures);
         
-        return result;
+        double pStat = a < b ? a : b;
+        // result.change = result.pStat < 0.05; // As yet undetermined issue with this approach.
+
+        return new LikelihoodResult(change, pStat, negLL);
     }
-
-    
-
-
 
     public int getMaxIterations() {
 		return maxIterations;
@@ -215,8 +189,6 @@ public class SPLL {
 		this.maxIterations = maxIterations;
 	}
 
-
-
 	public int getNumClusters() {
 		return numClusters;
 	}
@@ -224,9 +196,7 @@ public class SPLL {
 	public void setNumClusters(int numClusters) {
 		this.numClusters = numClusters;
 	}
-
-
-
+	
 	public ClusterProvider getClusterer() {
 		return clusterer;
 	}
@@ -234,8 +204,6 @@ public class SPLL {
 	public void setClusterer(ClusterProvider clusterer) {
 		this.clusterer = clusterer;
 	}
-
-
 
 	public CumulativeDistributionFunctionProvider getCdf() {
 		return cdf;
@@ -245,13 +213,18 @@ public class SPLL {
 		this.cdf = cdf;
 	}
 
-
-
-	//region Internal classes
     public class LikelihoodResult {
-        public boolean change;
-        public double pStat;
-        public double cStat;
+    	
+        public final boolean change;
+        public final double pStat;
+        public final double cStat;
+        
+        public LikelihoodResult(final boolean change, final double pStat, final double cStat)
+        {
+        	this.change = change;
+        	this.pStat = pStat;
+        	this.cStat = cStat;
+        }
+        
     }
-    //endregion
 }
