@@ -53,7 +53,7 @@ public class SPLL {
 		List<double[]> clusterVariance = new ArrayList<double[]>();
         // Calculate the REFERENCE distribution from Window 1
         for(InstanceRetainingCluster cluster : clusters) {
-            int nObservations       = (int)cluster.getWeight();
+            double nObservations       = cluster.getWeight();
             double[] center         = cluster.getCenter();
             double maxLikelihood    = 1 / nObservations;
 
@@ -92,7 +92,7 @@ public class SPLL {
         return dist;
     }
 	
-	public void debugPrint (List<double[]> toPrint)
+	public void debugPrintList (List<double[]> toPrint)
 	{
 		for(double[] row : toPrint)
 		{
@@ -115,9 +115,9 @@ public class SPLL {
         List<double[]> clusterVariance = getClusterVariance(clusters);
         
         System.out.println("Means");
-        debugPrint(clusterMeans);
+        debugPrintList(clusterMeans);
         System.out.println("------------------------------\nVariance");
-        debugPrint(clusterVariance);
+        debugPrintList(clusterVariance);
         System.out.println("------------------------------");
 
         int totalObservations   = w1.numInstances();
