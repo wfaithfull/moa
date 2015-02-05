@@ -50,7 +50,7 @@ public class InstanceRetainingCluster extends Cluster {
         }
 
         for(int i=0;i<nAttr;i++) {
-            center[i] = center[i] / nObsv;
+            center[i] /= nObsv;
         }
 
         return new DenseInstance(1.0d, center);
