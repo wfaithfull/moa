@@ -31,11 +31,11 @@ public class SPLL {
 	
 	// Injected clustering and CDF implementations.
 	private ClusterProvider clusterer;
-	private CumulativeDistributionFunctionProvider cdf;
+	private StatsProvider stats;
 
-	public SPLL(final ClusterProvider clusterer, final CumulativeDistributionFunctionProvider cdf) {
+	public SPLL(final ClusterProvider clusterer,final StatsProvider stats) {
 		this.setClusterer(clusterer);
-		this.setCdf(cdf);
+		this.setStatsProvider(stats);
 		
 		setMaxIterations(DEFAULT_MAX_ITERATIONS);
 		setNumClusters(DEFAULT_N_CLUSTERS);
@@ -43,35 +43,18 @@ public class SPLL {
 	
 	public SPLL() {
 		// We use K-Means and Chi Square.
-		this(new ApacheKMeansAdapter(), new ApacheChiSquareAdapter());
+		this(new ApacheKMeansAdapter(), new ApacheStatsAdapter());
 	}
 	
 	private List<double[]> getClusterVariance(List<InstanceRetainingCluster> clusters) {
 		
-		int nFeatures = clusters.get(0).getCenter().length;
-		
 		List<double[]> clusterVariance = new ArrayList<double[]>();
-        // Calculate the REFERENCE distribution from Window 1
+		// Calculate the REFERENCE distribution from Window 1
         for(InstanceRetainingCluster cluster : clusters) {
-            double nObservations       = cluster.getWeight();
-            double[] center         = cluster.getCenter();
-            double maxLikelihood    = 1 / nObservations;
-
-            List<Instance> data = cluster.getInstances();
-            double[] variance = new double[nFeatures];
-
-            for(int i=0;i<nObservations; i++) {
-                double[] observation = data.get(i).toDoubleArray();
-                // (value of each feature for each observation MINUS cluster mean for that feature)^SQUARED
-                // Multiply that by 1 / Nk (Maximum likelihood estimate of the variance)
-                for(int j=0;j<nFeatures; j++) {
-                    variance[j] = Math.pow(observation[j] - center[j], 2) * maxLikelihood;
-                }
-            }
-
-            clusterVariance.add(variance);
+        	double[] variance = stats.featureWiseVariance(cluster.getInstances());
+        	clusterVariance.add(variance);
         }
-        
+		
         return clusterVariance;
 	}
 	
@@ -104,24 +87,23 @@ public class SPLL {
     	
     	// Cluster w1 using injected clustering strategy
         List<InstanceRetainingCluster> clusters = getClusterer().cluster(w1, numClusters, maxIterations);
+    	
+    	int totalObservations   = w1.numInstances();
+        int nFeatures           = w1.get(0).toDoubleArray().length;	
+        int nClusters			= clusters.size();
+        
+        double[] classCount 	= new double[nClusters];
+        double[] classPriors 	= new double[nClusters];
 
         // Calculate class priors by counting cluster membership
-        List<Integer> classPriors = new ArrayList<Integer>();
-        for(InstanceRetainingCluster cluster : clusters) {
-			classPriors.add((int)cluster.getWeight());
+        for(int k=0;k<nClusters;k++) {
+        	InstanceRetainingCluster cluster = clusters.get(k);
+			classCount[k] 	= cluster.getWeight();
+			classPriors[k] 	= classCount[k] / totalObservations;
 		}
         
         List<double[]> clusterMeans = getClusterMeans(clusters);
         List<double[]> clusterVariance = getClusterVariance(clusters);
-        
-        System.out.println("Means");
-        debugPrintList(clusterMeans);
-        System.out.println("------------------------------\nVariance");
-        debugPrintList(clusterVariance);
-        System.out.println("------------------------------");
-
-        int totalObservations   = w1.numInstances();
-        int nFeatures           = w1.get(0).toDoubleArray().length;	
 
         /* Combine cluster variances into the final covariance matrix, weighted by priors.
         ~ One covariance matrix to rule them all,
@@ -129,56 +111,75 @@ public class SPLL {
         ~ One covariance matrix to bring them all,
         ~ And in the darkness bind them.
         */
-        double[][] finalCovariance = new double[nFeatures][nFeatures];
         double[] featureVariance = new double[nFeatures];
         double minVariance = Double.MAX_VALUE;
         
         for(int j=0;j<nFeatures;j++) {
 	        double cov = 0;
-	        // Sum over clusters
-	        for(int k=0;k<clusters.size();k++) {
-	        	cov += classPriors.get(k) * clusterVariance.get(k)[j];
-	        }
 	        
+	        // Sum over clusters. Weight by priors.
+	        for(int k=0;k<clusters.size();k++) {
+	        	cov += (clusterVariance.get(k)[j] * classPriors[k]);
+	        }
+
 	        if(cov != 0 && cov < minVariance)
                 minVariance = cov;
-	        
-	        finalCovariance[j][j] = cov; // We can cheat and only do the diagonal
-	        featureVariance[j] = cov;
+
+	        featureVariance[j] = cov; // We can cheat and only do the diagonal
         }
 
         double[] reciprocalVariance = new double[nFeatures];
 
         for(int j=0;j<nFeatures;j++) {
             if(featureVariance[j] == 0)
-                featureVariance[j] = minVariance;
-            reciprocalVariance[j] = 1 / featureVariance[j];
+                featureVariance[j] = minVariance; // Guard against 0 variance
+            
+            reciprocalVariance[j] = 1 / featureVariance[j]; // Precalculate reciprocals
         }
-
+		
         double logLikelihoodTerm = 0;
         for(int i=0;i<totalObservations;i++) {
             double minDist = Double.MAX_VALUE;
-            for (int k = 0; k < clusters.size(); k++) {
-                double dist = mahalanobis(w2.get(i).toDoubleArray(), clusterMeans.get(k), reciprocalVariance);
-                if (dist < minDist) {
-                    minDist = dist;
+            for (int k = 0; k < nClusters; k++) {
+            	
+            	// This is a transliteration of the actual MATLAB code
+            	double[] distanceToMean = new double[nFeatures];
+            	for(int j=0;j<nFeatures;j++)
+            	{
+            		double[] clusterMean = clusterMeans.get(k);
+            		double[] xx = w2.get(i).toDoubleArray();
+            		distanceToMean[j] = (clusterMean[j] - xx[j]);
+            	}
+            	double dst = 0;
+            	for(int j=0;j<nFeatures;j++)
+            	{
+            		dst += (distanceToMean[j] * featureVariance[j]) * distanceToMean[j];
+            	}
+            	// </transliteration>
+            	
+            	// This is the suggested measure. They produce quite different results.
+                //double dst = mahalanobis(w2.get(i).toDoubleArray(), clusterMeans.get(k), reciprocalVariance);
+            	
+                if (dst < minDist) {
+                    minDist = dst;
                 }
             }
 
             logLikelihoodTerm += minDist;
         }
         
-        double negLL = logLikelihoodTerm / totalObservations;
+        double negLL 	= logLikelihoodTerm / totalObservations; // Mean Log-Likelihood term
         
-        double a = getCdf().cumulativeProbability(negLL, nFeatures);
-        double b = 1-a;
+        double cStat 	= negLL / (nFeatures + Math.sqrt(2*nFeatures));
         
-        boolean change = negLL > nFeatures + Math.sqrt(2*nFeatures);
-        
-        double pStat = a < b ? a : b;
-        // result.change = result.pStat < 0.05; // As yet undetermined issue with this approach.
+        double a 		= getStatsProvider().cumulativeProbability(cStat, nFeatures);
+        double b 		= 1-a;
 
-        return new LikelihoodResult(change, pStat, negLL);
+        double pStat 	= a < b ? a : b;
+        boolean change 	= negLL > nFeatures + Math.sqrt(2*nFeatures);
+        // boolean change = pStat < 0.05;
+        
+        return new LikelihoodResult(change, pStat, cStat);
     }
 
     public int getMaxIterations() {
@@ -204,13 +205,14 @@ public class SPLL {
 	public void setClusterer(ClusterProvider clusterer) {
 		this.clusterer = clusterer;
 	}
-
-	public CumulativeDistributionFunctionProvider getCdf() {
-		return cdf;
+	
+	public StatsProvider getStatsProvider() {
+		return stats;
 	}
-
-	public void setCdf(CumulativeDistributionFunctionProvider cdf) {
-		this.cdf = cdf;
+	
+	public void setStatsProvider(StatsProvider provider)
+	{
+		this.stats = provider;
 	}
 
     public class LikelihoodResult {
