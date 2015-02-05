@@ -136,15 +136,12 @@ public class SPLL {
             	
             	// This is a transliteration of the actual MATLAB code
             	double[] distanceToMean = new double[nFeatures];
+            	double dst = 0;
             	for(int j=0;j<nFeatures;j++)
             	{
             		double[] clusterMean = clusterMeans.get(k);
             		double[] xx = w2.get(i).toDoubleArray();
             		distanceToMean[j] = (clusterMean[j] - xx[j]);
-            	}
-            	double dst = 0;
-            	for(int j=0;j<nFeatures;j++)
-            	{
             		dst += (distanceToMean[j] * featureVariance[j]) * distanceToMean[j];
             	}
             	// </transliteration>
