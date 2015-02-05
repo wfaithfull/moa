@@ -38,6 +38,8 @@ public class ApacheKMeansAdapter implements ClusterProvider {
 	@Override
 	public List<InstanceRetainingCluster> cluster(final Instances data, final int k, final int maxIterations) {
 
+		
+		
 		int nInst = data.numInstances();
 		
 		KMeansPlusPlusClusterer<InstanceAdapter> km = 
