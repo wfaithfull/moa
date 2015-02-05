@@ -75,14 +75,6 @@ public class SPLL {
         return dist;
     }
 	
-	public void debugPrintList (List<double[]> toPrint)
-	{
-		for(double[] row : toPrint)
-		{
-			System.out.println(Arrays.toString(row));
-		}
-	}
-	
     public LikelihoodResult logLL(Instances w1, Instances w2) {
     	
     	// Cluster w1 using injected clustering strategy
