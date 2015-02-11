@@ -3,66 +3,54 @@ package moa.classifiers.core.driftdetection.multivariate.SPLL;
 import java.util.ArrayList;
 import java.util.List;
 
-import moa.cluster.InstanceRetainingCluster;
-
 import org.apache.commons.math3.ml.clustering.CentroidCluster;
 import org.apache.commons.math3.ml.clustering.Clusterable;
 import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
 
-import com.yahoo.labs.samoa.instances.DenseInstance;
-import com.yahoo.labs.samoa.instances.Instance;
-import com.yahoo.labs.samoa.instances.Instances;
-
 public class ApacheKMeansAdapter implements ClusterProvider {
 	
-	private final class InstanceAdapter implements Clusterable {
+	private final class DoubleAdapter implements Clusterable {
+
+		private double[] inst;
 		
-		private Instance inst;
-		
-		public InstanceAdapter(Instance inst) {
+		public DoubleAdapter(double[] inst) {
 			this.inst = inst;
 		}
-
-		@Override
-		public double[] getPoint() {
-			return inst.toDoubleArray();
-		}
 		
-		public Instance getInstance() {
+		@Override
+		public double[] getPoint() { 
 			return inst;
 		}
 		
-		
 	}
-
-	@Override
-	public List<InstanceRetainingCluster> cluster(final Instances data, final int k, final int maxIterations) {
-
+	
+	public List<double[][]> cluster(final double[][] data, final int k, final int maxIterations) {
+		int nInst = data.length;
+		int nFeatures = data[0].length;
 		
+		KMeansPlusPlusClusterer<DoubleAdapter> km = new KMeansPlusPlusClusterer<DoubleAdapter>(k, maxIterations);
 		
-		int nInst = data.numInstances();
-		
-		KMeansPlusPlusClusterer<InstanceAdapter> km = 
-				new KMeansPlusPlusClusterer<InstanceAdapter>(k, maxIterations);
-		
-		List<InstanceAdapter> points = new ArrayList<InstanceAdapter>();
-		for(int i = 0; i < nInst; i++) {
-			points.add(new InstanceAdapter(data.get(i)));
+		List<DoubleAdapter> points = new ArrayList<DoubleAdapter>();
+		for(int i=0;i<nInst;i++) {
+			points.add(new DoubleAdapter(data[i]));
 		}
 		
-		List<CentroidCluster<InstanceAdapter>> clusters = km.cluster(points);
+		List<CentroidCluster<DoubleAdapter>> clusters = km.cluster(points);
 		
-		List<InstanceRetainingCluster> adaptedClusters = new ArrayList<InstanceRetainingCluster>();
-		
-		for(CentroidCluster<InstanceAdapter> cluster : clusters) {
-			InstanceRetainingCluster thisCluster = new InstanceRetainingCluster(new DenseInstance(1, cluster.getCenter().getPoint()));
-			for (InstanceAdapter instanceAdapter : cluster.getPoints()) {
-				thisCluster.addInstance(instanceAdapter.getInstance());
+		List<double[][]> convertedClusters = new ArrayList<double[][]>();
+		for(CentroidCluster<DoubleAdapter> cluster : clusters) {
+			
+			List<DoubleAdapter> clusterData = cluster.getPoints();
+			int clusterSize = clusterData.size();
+			double[][] rawClusterData = new double[clusterSize][nFeatures];
+			for(int i=0; i < clusterSize; i++){
+				rawClusterData[i] = clusterData.get(i).getPoint();
 			}
-			adaptedClusters.add(thisCluster);
+			convertedClusters.add(rawClusterData);
 		}
+			
+		return convertedClusters;
 		
-		return adaptedClusters;
-	}
+	} 
 
 }

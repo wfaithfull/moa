@@ -11,6 +11,6 @@ import com.yahoo.labs.samoa.instances.Instances;
  */
 public interface ClusterProvider {
 
-    List<InstanceRetainingCluster> cluster(Instances data, int k, int maxIterations);
+    List<double[][]> cluster(double[][] data, int k, int maxIterations);
 
 }
