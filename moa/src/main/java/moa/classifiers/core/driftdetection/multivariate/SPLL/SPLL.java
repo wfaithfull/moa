@@ -1,12 +1,10 @@
 package moa.classifiers.core.driftdetection.multivariate.SPLL;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import moa.cluster.InstanceRetainingCluster;
 
-import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
 
 /**
@@ -67,6 +65,7 @@ public class SPLL {
 		return clusterMeans;
 	}
 	
+	@SuppressWarnings("unused")
 	private static double mahalanobis(double[] xx, double[] mk, double[] reciprocals) {
         double dist = 0;
         for(int j=0;j<xx.length;j++) {
@@ -119,7 +118,7 @@ public class SPLL {
 
 	        featureVariance[j] = cov; // We can cheat and only do the diagonal
         }
-
+        
         double[] reciprocalVariance = new double[nFeatures];
 
         for(int j=0;j<nFeatures;j++) {
@@ -128,6 +127,7 @@ public class SPLL {
             
             reciprocalVariance[j] = 1 / featureVariance[j]; // Precalculate reciprocals
         }
+        
 		
         double logLikelihoodTerm = 0;
         for(int i=0;i<totalObservations;i++) {
@@ -142,7 +142,7 @@ public class SPLL {
             		double[] clusterMean = clusterMeans.get(k);
             		double[] xx = w2.get(i).toDoubleArray();
             		distanceToMean[j] = (clusterMean[j] - xx[j]);
-            		dst += (distanceToMean[j] * featureVariance[j]) * distanceToMean[j];
+            		dst += (distanceToMean[j] * reciprocalVariance[j]) * distanceToMean[j];
             	}
             	// </transliteration>
             	
