@@ -85,6 +85,18 @@ public class SPLL {
         return dist;
     }
 	
+	public LikelihoodResult testChange(double[][] w1, double[][] w2) {
+		
+		// Detector needs to be run forwards and backwards
+		// to guarantee a fair result.
+		LikelihoodResult forwards 	= logLL(w1, w2);
+		LikelihoodResult backwards 	= logLL(w2, w1);
+		
+		boolean winner = forwards.rawStat > backwards.rawStat;
+		
+		return winner ? forwards : backwards; 
+	}
+	
 	public LikelihoodResult logLL(double[][] w1, double[][] w2)
 	{
 		List<double[][]> clusters = getClusterer().cluster(w1, numClusters, maxIterations);
@@ -174,10 +186,10 @@ public class SPLL {
         double a 		= getStatsProvider().cumulativeProbability(meanLL, nFeatures);
         double b 		= 1-a;
 
-        double pStat 	= a < b ? a : b;
-        boolean change = pStat < 0.05;
+        double chi2Stat 	= a < b ? a : b;
+        boolean change = chi2Stat < 0.05;
         
-        return new LikelihoodResult(change, pStat, meanLL);
+        return new LikelihoodResult(change, chi2Stat, meanLL);
 	}
 
     public int getMaxIterations() {
@@ -216,14 +228,14 @@ public class SPLL {
     public class LikelihoodResult {
     	
         public final boolean change;
-        public final double pStat;
-        public final double cStat;
+        public final double chi2Stat;
+        public final double rawStat;
         
-        public LikelihoodResult(final boolean change, final double pStat, final double cStat)
+        public LikelihoodResult(final boolean change, final double chi2Stat, final double rawStat)
         {
         	this.change = change;
-        	this.pStat = pStat;
-        	this.cStat = cStat;
+        	this.chi2Stat = chi2Stat;
+        	this.rawStat = rawStat;
         }
         
     }
