@@ -4,6 +4,7 @@ import java.util.PriorityQueue;
 import java.util.Queue;
 
 import moa.classifiers.core.driftdetection.multivariate.SPLL.SPLL;
+import moa.classifiers.core.driftdetection.multivariate.SPLL.SPLL.LikelihoodResult;
 import moa.core.ObjectRepository;
 import moa.tasks.TaskMonitor;
 
@@ -25,7 +26,9 @@ public class SPLLDetector extends AbstractMultivariateChangeDetector {
 	
 	private SPLL detector;
 	
-	private Queue<Instance> window;
+	private Queue<Instance> window_1;
+	private Queue<Instance> window_2;
+
 	
 	private int windowSize;
 
@@ -43,16 +46,53 @@ public class SPLLDetector extends AbstractMultivariateChangeDetector {
 	{
 		this.detector = detector;
 		this.windowSize = windowSize;
-		this.window = new PriorityQueue<Instance>();
+		this.window_2 = new PriorityQueue<Instance>();
+		this.window_1 = new PriorityQueue<Instance>();
 	}
 	
 	@Override
 	public void input(Instance inputValue) {
-		// TODO Auto-generated method stub
-		window.add(inputValue);
-
+		updateBothWindows(inputValue);
+	}
+	
+	private void updateBothWindows(Instance inputValue)
+	{
+		/*
+		 * Pair of sliding windows, W1 & W2
+		 * |-------[====][====]-------]
+		 * 			 W1	   W2
+		 * 
+		 * Move together such that the last observation of W2
+		 * will be the next observation of W1.
+		 */
+		
+		// If W1 is full, remove oldest observation
+		if(window_1.size() >= windowSize) {
+			window_1.remove();
+		}
+		
+		// If W2 is full, move oldest observation to W1
+		if(window_2.size() >= windowSize) {
+			window_1.add(window_2.remove());
+		}
+		
+		// W2 is cutting edge
+		window_2.add(inputValue);
 	}
 
+	private void updateWindow2(Instance inputValue) {
+		
+		/*
+		 * Pair of sliding windows, W1 & W2
+		 * |[====]-------[====]-------]
+		 * 	  W1		   W2
+		 * 
+		 * Move independently, W1 stays put until change is detected.
+		 */
+		
+		// TODO: Implement static window.
+	}
+	
 	@Override
 	public void getDescription(StringBuilder sb, int indent) {
 		// TODO Auto-generated method stub
