@@ -53,42 +53,50 @@ public class SPLLTest {
         stream.prepareForUse();
 		
         for(int i=0;i<25000;i++) {
-			Instances w1 = getRandomWindow(50, stream);
-			Instances w2 = getRandomWindow(50, stream);
+        	double[][] w1 = getRandomWindowRaw(50, stream);
+			double[][] w2 = getRandomWindowRaw(50, stream);
 			LikelihoodResult result = spll.logLL(w1, w2);
-			//System.out.println(String.format("%b %f %f",result.change, result.cStat, result.pStat));
         }
+	}
+	
+	static double[][] instancesTo2DArray(Instances moaData)
+	{
+		int nObsv = moaData.numInstances();
+		int nAttr = moaData.numAttributes();
+		
+		double[][] toReturn = new double[nObsv][nAttr];
+		for(int i=0;i<nObsv;i++) {
+			toReturn[i] = moaData.get(i).toDoubleArray();
+		}
+		
+		return toReturn;
 	}
 	
 	@Test
 	public void testLogLLStatic() throws IOException {
-
-		// final int INSTANCES = 150; // Horrible, but no way to get #instances from ArffLoader!
-		
 		SPLL spll = new SPLL();
-		/*
-		Reader reader = new FileReader("iris.arff");
-		
-		ArffLoader loader = new ArffLoader(reader);
-		Instances data = new Instances(new StringReader(""), INSTANCES);
-		
-		for(int i=0; i<INSTANCES;i++) {
-			Instance inst = loader.readInstance();
-			data.add(inst);	
-		}*/
-		
 		Instances data = loadDataFromArff();
 		
-		LikelihoodResult ll = spll.logLL(data, data);
-		System.out.println(String.format("[c=%b,pst=%f,st=%f]",ll.change, ll.pStat,ll.cStat));
+		int nAttr = data.get(0).toDoubleArray().length;
+		int nObsv = data.numInstances();
 		
-		assertEquals(false, ll.change);
+		double[][] rawData = new double[nObsv][nAttr];
+		
+		for(int i=0; i<nObsv; i++)
+		{
+			rawData[i] = data.get(i).toDoubleArray();
+		}
+		
+		LikelihoodResult llr = spll.logLL(rawData, rawData);
+		System.out.println(String.format("[c=%b,pst=%f,st=%f]",llr.change, llr.pStat,llr.cStat));
+		
+		assertEquals(false, llr.change);
 	}
 	
 	public void testSpeed() throws IOException {
 		SPLL spll = new SPLL();
 		
-		Instances data = loadDataFromArff();
+		double[][] data = instancesTo2DArray(loadDataFromArff());
 		
 		final int RUNS = 10000;
 		long duration = 0;
@@ -103,14 +111,14 @@ public class SPLLTest {
 		
 		System.out.println(String.format("Duration of 10k runs: %d seconds\nAverage per run: %d seconds", duration/1000, (duration/RUNS)/1000));
 	}
-	
+
+	/*
+	 * Helper method loads iris.arff into MOA Instances
+	 */
 	static Instances loadDataFromArff()
 	{
-		//Reader reader = new FileReader("iris.arff");
-		
 		ArffFileStream afs = new ArffFileStream("iris.arff", 0);
-		//afs.
-		//ArffLoader loader = new ArffLoader(reader);
+
 		Instances data = new Instances(new StringReader(""), (int)afs.estimatedRemainingInstances());
 		
 		while(afs.hasMoreInstances()) {
@@ -146,6 +154,18 @@ public class SPLLTest {
         	data.add(newInst);
         	nSamples++;
         }
+		return data;
+	}
+	
+	static double[][] getRandomWindowRaw(int size, RandomRBFGeneratorDrift stream) {
+		int nSamples = 0;
+		double[][] data = new double[size][stream.getHeader().numAttributes()];
+		
+		while(stream.hasMoreInstances() && nSamples < size) {
+			data[nSamples] = stream.nextInstance().getData().toDoubleArray();
+			nSamples++;
+		}
+		
 		return data;
 	}
 
