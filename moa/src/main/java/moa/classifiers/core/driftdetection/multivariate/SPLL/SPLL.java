@@ -1,10 +1,12 @@
 package moa.classifiers.core.driftdetection.multivariate.SPLL;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import moa.cluster.InstanceRetainingCluster;
 
+import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.Instances;
 
 /**
@@ -44,27 +46,42 @@ public class SPLL {
 		this(new ApacheKMeansAdapter(), new ApacheStatsAdapter());
 	}
 	
-	private List<double[]> getClusterVariance(List<InstanceRetainingCluster> clusters) {
-		
+	private List<double[]> getClusterVariance(List<double[][]> clusters) {
 		List<double[]> clusterVariance = new ArrayList<double[]>();
-		// Calculate the REFERENCE distribution from Window 1
-        for(InstanceRetainingCluster cluster : clusters) {
-        	double[] variance = stats.featureWiseVariance(cluster.getInstances());
-        	clusterVariance.add(variance);
-        }
 		
-        return clusterVariance;
+		for(int i=0; i<clusters.size(); i++) {
+			double[] variance = stats.featureWiseVariance(clusters.get(i));
+			clusterVariance.add(variance);
+		}
+		
+		return clusterVariance;
 	}
 	
-	private List<double[]> getClusterMeans(List<InstanceRetainingCluster> clusters) {
+	private List<double[]> getClusterMeans(List<double[][]> clusters) {
 		List<double[]> clusterMeans = new ArrayList<double[]>();
-		for(InstanceRetainingCluster cluster : clusters) {
-			double[] center = cluster.getCenter();
+		
+		for(int i=0;i<clusters.size(); i++){
+			double[][] cluster = clusters.get(i);
+			int nObsv		= cluster.length;
+			int nFeatures 	= cluster[0].length;
+			
+			double[] center = new double[nFeatures];
+			for(int j=0;j<nObsv;j++) {
+				for(int k=0; k<nFeatures; k++) {
+					center[k] += cluster[j][k];
+				}
+				
+			}
+			
+			for(int k=0; k<nFeatures; k++) {
+				center[k] /= nObsv;
+			}
+			
 			clusterMeans.add(center);
 		}
 		return clusterMeans;
 	}
-	
+
 	@SuppressWarnings("unused")
 	private static double mahalanobis(double[] xx, double[] mk, double[] reciprocals) {
         double dist = 0;
@@ -74,13 +91,12 @@ public class SPLL {
         return dist;
     }
 	
-    public LikelihoodResult logLL(Instances w1, Instances w2) {
-    	
-    	// Cluster w1 using injected clustering strategy
-        List<InstanceRetainingCluster> clusters = getClusterer().cluster(w1, numClusters, maxIterations);
-    	
-    	int totalObservations   = w1.numInstances();
-        int nFeatures           = w1.get(0).toDoubleArray().length;	
+	public LikelihoodResult logLL(double[][] w1, double[][] w2)
+	{
+		List<double[][]> clusters = getClusterer().clusterRaw(w1, numClusters, maxIterations);
+		
+    	int totalObservations   = w1.length;
+        int nFeatures           = w1[0].length;	
         int nClusters			= clusters.size();
         
         double[] classCount 	= new double[nClusters];
@@ -88,9 +104,9 @@ public class SPLL {
 
         // Calculate class priors by counting cluster membership
         for(int k=0;k<nClusters;k++) {
-        	InstanceRetainingCluster cluster = clusters.get(k);
-			classCount[k] 	= cluster.getWeight();
-			classPriors[k] 	= classCount[k] / totalObservations;
+        	double[][] cluster 	= clusters.get(k);
+			classCount[k] 		= cluster.length;
+			classPriors[k] 		= classCount[k] / totalObservations;
 		}
         
         List<double[]> clusterMeans = getClusterMeans(clusters);
@@ -101,6 +117,8 @@ public class SPLL {
         ~ One covariance matrix to find them.
         ~ One covariance matrix to bring them all,
         ~ And in the darkness bind them.
+        ~
+        ~ ... Except not. We are lazy, and only calculate the diagonal.
         */
         double[] featureVariance = new double[nFeatures];
         double minVariance = Double.MAX_VALUE;
@@ -140,7 +158,7 @@ public class SPLL {
             	for(int j=0;j<nFeatures;j++)
             	{
             		double[] clusterMean = clusterMeans.get(k);
-            		double[] xx = w2.get(i).toDoubleArray();
+            		double[] xx = w2[i];
             		distanceToMean[j] = (clusterMean[j] - xx[j]);
             		dst += (distanceToMean[j] * reciprocalVariance[j]) * distanceToMean[j];
             	}
@@ -157,19 +175,16 @@ public class SPLL {
             logLikelihoodTerm += minDist;
         }
         
-        double negLL 	= logLikelihoodTerm / totalObservations; // Mean Log-Likelihood term
+        double meanLL 	= logLikelihoodTerm / totalObservations; // Mean Log-Likelihood term
         
-        double cStat 	= negLL / (nFeatures + Math.sqrt(2*nFeatures));
-        
-        double a 		= getStatsProvider().cumulativeProbability(cStat, nFeatures);
+        double a 		= getStatsProvider().cumulativeProbability(meanLL, nFeatures);
         double b 		= 1-a;
 
         double pStat 	= a < b ? a : b;
-        boolean change 	= negLL > nFeatures + Math.sqrt(2*nFeatures);
-        // boolean change = pStat < 0.05;
+        boolean change = pStat < 0.05;
         
-        return new LikelihoodResult(change, pStat, cStat);
-    }
+        return new LikelihoodResult(change, pStat, meanLL);
+	}
 
     public int getMaxIterations() {
 		return maxIterations;
