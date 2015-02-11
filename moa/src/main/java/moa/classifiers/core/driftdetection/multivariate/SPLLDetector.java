@@ -53,6 +53,14 @@ public class SPLLDetector extends AbstractMultivariateChangeDetector {
 	@Override
 	public void input(Instance inputValue) {
 		updateBothWindows(inputValue);
+		
+		if(enoughObservations()) {
+			// TODO: detect change
+		}
+	}
+	
+	private boolean enoughObservations() {
+		return window_1.size() == windowSize && window_2.size() == windowSize;
 	}
 	
 	private void updateBothWindows(Instance inputValue)
