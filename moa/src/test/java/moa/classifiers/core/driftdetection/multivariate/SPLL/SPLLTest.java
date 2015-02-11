@@ -9,6 +9,7 @@ import java.io.StringReader;
 import java.util.Arrays;
 
 import moa.classifiers.core.driftdetection.multivariate.SPLL.SPLL.LikelihoodResult;
+import moa.streams.ArffFileStream;
 import moa.streams.generators.RandomRBFGeneratorDrift;
 
 import org.apache.commons.math3.linear.MatrixUtils;
@@ -62,9 +63,10 @@ public class SPLLTest {
 	@Test
 	public void testLogLLStatic() throws IOException {
 
-		final int INSTANCES = 150; // Horrible, but no way to get #instances from ArffLoader!
+		// final int INSTANCES = 150; // Horrible, but no way to get #instances from ArffLoader!
 		
 		SPLL spll = new SPLL();
+		/*
 		Reader reader = new FileReader("iris.arff");
 		
 		ArffLoader loader = new ArffLoader(reader);
@@ -73,12 +75,50 @@ public class SPLLTest {
 		for(int i=0; i<INSTANCES;i++) {
 			Instance inst = loader.readInstance();
 			data.add(inst);	
-		}
+		}*/
+		
+		Instances data = loadDataFromArff();
 		
 		LikelihoodResult ll = spll.logLL(data, data);
 		System.out.println(String.format("[c=%b,pst=%f,st=%f]",ll.change, ll.pStat,ll.cStat));
 		
 		assertEquals(false, ll.change);
+	}
+	
+	public void testSpeed() throws IOException {
+		SPLL spll = new SPLL();
+		
+		Instances data = loadDataFromArff();
+		
+		final int RUNS = 10000;
+		long duration = 0;
+		
+		for(int i=0;i<RUNS;i++)
+		{
+			long start = System.nanoTime();
+			spll.logLL(data, data);
+			long end = System.nanoTime();
+			duration += (end-start);
+		}
+		
+		System.out.println(String.format("Duration of 10k runs: %d seconds\nAverage per run: %d seconds", duration/1000, (duration/RUNS)/1000));
+	}
+	
+	static Instances loadDataFromArff()
+	{
+		//Reader reader = new FileReader("iris.arff");
+		
+		ArffFileStream afs = new ArffFileStream("iris.arff", 0);
+		//afs.
+		//ArffLoader loader = new ArffLoader(reader);
+		Instances data = new Instances(new StringReader(""), (int)afs.estimatedRemainingInstances());
+		
+		while(afs.hasMoreInstances()) {
+			Instance inst = afs.nextInstance().instance;
+			data.add(inst);	
+		}
+		
+		return data;
 	}
 	
 	static Instances makeIdenticalInstances(Instance inst, int n) {
