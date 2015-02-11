@@ -1,13 +1,7 @@
 package moa.classifiers.core.driftdetection.multivariate.SPLL;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
-import moa.cluster.InstanceRetainingCluster;
-
-import com.yahoo.labs.samoa.instances.Instance;
-import com.yahoo.labs.samoa.instances.Instances;
 
 /**
  * Semi Parametric Log Likelihood change detection criterion for multivariate data.
@@ -93,7 +87,7 @@ public class SPLL {
 	
 	public LikelihoodResult logLL(double[][] w1, double[][] w2)
 	{
-		List<double[][]> clusters = getClusterer().clusterRaw(w1, numClusters, maxIterations);
+		List<double[][]> clusters = getClusterer().cluster(w1, numClusters, maxIterations);
 		
     	int totalObservations   = w1.length;
         int nFeatures           = w1[0].length;	
