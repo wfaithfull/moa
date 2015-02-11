@@ -88,7 +88,7 @@ public class SPLLTest {
 		}
 		
 		LikelihoodResult llr = spll.logLL(rawData, rawData);
-		System.out.println(String.format("[c=%b,pst=%f,st=%f]",llr.change, llr.pStat,llr.cStat));
+		System.out.println(String.format("[c=%b,pst=%f,st=%f]",llr.change, llr.chi2Stat,llr.rawStat));
 		
 		assertEquals(false, llr.change);
 	}
