@@ -1,8 +1,9 @@
 package moa.classifiers.core.driftdetection.multivariate;
 
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.Collection;
 
+import moa.classifiers.core.driftdetection.multivariate.SPLL.MultivariateSlidingWindowPair;
+import moa.classifiers.core.driftdetection.multivariate.SPLL.MultivariateSlidingWindowPair.WindowStrategy;
 import moa.classifiers.core.driftdetection.multivariate.SPLL.SPLL;
 import moa.classifiers.core.driftdetection.multivariate.SPLL.SPLL.LikelihoodResult;
 import moa.core.ObjectRepository;
@@ -25,12 +26,7 @@ public class SPLLDetector extends AbstractMultivariateChangeDetector {
 	private static final long serialVersionUID = -6462770156931895806L;
 	
 	private SPLL detector;
-	
-	private Queue<Instance> window_1;
-	private Queue<Instance> window_2;
-
-	
-	private int windowSize;
+	private MultivariateSlidingWindowPair windows;
 
 	public SPLLDetector()
 	{
@@ -45,60 +41,36 @@ public class SPLLDetector extends AbstractMultivariateChangeDetector {
 	public SPLLDetector(SPLL detector, int windowSize)
 	{
 		this.detector = detector;
-		this.windowSize = windowSize;
-		this.window_2 = new PriorityQueue<Instance>();
-		this.window_1 = new PriorityQueue<Instance>();
+		this.windows = new MultivariateSlidingWindowPair(WindowStrategy.TOGETHER, windowSize);
 	}
 	
 	@Override
 	public void input(Instance inputValue) {
-		updateBothWindows(inputValue);
+		windows.update(inputValue);
 		
-		if(enoughObservations()) {
+		if(windows.enoughObservations()) {
 			// TODO: detect change
+			double[][] w1 = instancesTo2DArray(windows.getW1());
+			double[][] w2 = instancesTo2DArray(windows.getW2());
+			
+			LikelihoodResult lr = detector.testChange(w1, w2);
+			this.isChangeDetected = lr.change;
 		}
 	}
 	
-	private boolean enoughObservations() {
-		return window_1.size() == windowSize && window_2.size() == windowSize;
-	}
-	
-	private void updateBothWindows(Instance inputValue)
-	{
-		/*
-		 * Pair of sliding windows, W1 & W2
-		 * |-------[====][====]-------]
-		 * 			 W1	   W2
-		 * 
-		 * Move together such that the last observation of W2
-		 * will be the next observation of W1.
-		 */
+	private static double[][] instancesTo2DArray(Collection<Instance> instances) {
 		
-		// If W1 is full, remove oldest observation
-		if(window_1.size() >= windowSize) {
-			window_1.remove();
+		Instance[] intermediate = instances.toArray(new Instance[instances.size()]);
+		int nObsv = intermediate.length;
+		int nAttr = intermediate[0].numAttributes();
+		
+		double[][] array = new double[nObsv][nAttr];
+		
+		for(int i=0; i<nObsv; i++) {
+			array[i] = intermediate[i].toDoubleArray();
 		}
 		
-		// If W2 is full, move oldest observation to W1
-		if(window_2.size() >= windowSize) {
-			window_1.add(window_2.remove());
-		}
-		
-		// W2 is cutting edge
-		window_2.add(inputValue);
-	}
-
-	private void updateWindow2(Instance inputValue) {
-		
-		/*
-		 * Pair of sliding windows, W1 & W2
-		 * |[====]-------[====]-------]
-		 * 	  W1		   W2
-		 * 
-		 * Move independently, W1 stays put until change is detected.
-		 */
-		
-		// TODO: Implement static window.
+		return array;
 	}
 	
 	@Override
