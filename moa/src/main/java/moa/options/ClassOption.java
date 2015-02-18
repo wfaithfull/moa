@@ -63,6 +63,7 @@ public class ClassOption extends AbstractClassOption {
                 this.currentValue = cliStringToObject(s, this.requiredType,
                         null);
             } catch (Exception e) {
+            	System.out.println(e);
                 throw new IllegalArgumentException("Problems with option: " + getName(), e);
             }
         }
