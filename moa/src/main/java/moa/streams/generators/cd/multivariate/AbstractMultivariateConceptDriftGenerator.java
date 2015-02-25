@@ -3,6 +3,7 @@ package moa.streams.generators.cd.multivariate;
 import java.util.ArrayList;
 import java.util.Random;
 
+import moa.core.InstanceExample;
 import moa.core.ObjectRepository;
 import moa.options.AbstractOptionHandler;
 import moa.options.ClassOption;
@@ -14,6 +15,8 @@ import com.github.javacliparser.FlagOption;
 import com.github.javacliparser.IntOption;
 import com.github.javacliparser.ListOption;
 import com.github.javacliparser.Option;
+import com.yahoo.labs.samoa.instances.DenseInstance;
+import com.yahoo.labs.samoa.instances.Instance;
 import com.yahoo.labs.samoa.instances.InstancesHeader;
 
 /*
@@ -71,5 +74,46 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
 			ObjectRepository repository) {
 		this.numInstances = 0;
 		this.period = numInstancesConceptOption.getValue();
+	}
+	
+	protected abstract double[] nextValues();
+	
+	private double[] nextBinaryValues(double[] nums) {
+		double[] values = new double[nums.length];
+		for(int i=0;i<nums.length;i++) {
+			values[i] = this.instanceRandom.nextDouble() <= nums[i] ? 0 : 1;
+		}
+		
+		return values;
+	}
+	
+	private void setValues(Instance inst, double[] values) {
+		for(int i=0;i<inst.numAttributes();i++) {
+			inst.setValue(i, values[i]);
+		}
+	}
+	
+	public InstanceExample nextInstance() {
+        this.numInstances++;
+        InstancesHeader header = getHeader();
+        Instance inst = new DenseInstance(header.numAttributes());
+        inst.setDataset(header);
+        double[] nextValues = this.nextValues();
+        if (this.notBinaryStreamOption.isSet()) {
+        	this.setValues(inst, nextValues);
+        } else {
+        	this.setValues(inst, this.nextBinaryValues(nextValues));
+        }
+        //Ground truth
+        inst.setValue(1, this.getChange() ? 1 : 0);
+        if (this.getChange() == true) {
+            //this.clusterEvents.add(new ClusterEvent(this, this.numInstances, "Change", "Drift"));
+        }
+        inst.setValue(2,  nextValues[0]);
+        return new InstanceExample(inst);
+	}
+	
+	public boolean getChange() {
+		return this.change;
 	}
 }
