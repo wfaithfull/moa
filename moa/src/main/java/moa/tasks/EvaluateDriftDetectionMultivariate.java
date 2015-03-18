@@ -5,6 +5,7 @@ import moa.core.ObjectRepository;
 import moa.evaluation.LearningPerformanceEvaluator;
 import moa.options.ClassOption;
 import moa.streams.InstanceStream;
+import moa.streams.generators.cd.multivariate.AbstractMultivariateConceptDriftGenerator;
 
 public class EvaluateDriftDetectionMultivariate extends ConceptDriftMainTask {
 	
@@ -22,13 +23,17 @@ public class EvaluateDriftDetectionMultivariate extends ConceptDriftMainTask {
             "Drift detection method to evaluate on stream", MultivariateChangeDetector.class, "SPLLDetector");
 
     public ClassOption streamOption = new ClassOption("stream", 's',
-            "Stream to detect concept drift in.", InstanceStream.class,
-            "ArffFileStream");
+            "Stream to detect concept drift in.", AbstractMultivariateConceptDriftGenerator.class,
+            "MultivariateDriftGeneratorEnsemble");
 
     public ClassOption evaluatorOption = new ClassOption("evaluator", 'e',
             "Classification performance evaluation method.",
             LearningPerformanceEvaluator.class,
             "BasicConceptDriftPerformanceEvaluator");
+    
+    public EvaluateDriftDetectionMultivariate() {
+		// TODO Auto-generated constructor stub
+	}
 	
 	@Override
 	public Class<?> getTaskResultType() {

@@ -48,7 +48,11 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
 		return this.clusterEvents;
 	}
 	
-	public ListOption changeDetectorsOption = new ListOption("generators", 'g',
+    public IntOption instanceRandomSeedOption = new IntOption(
+            "instanceRandomSeed", 'i',
+            "Seed for random generation of instances.", 1);
+	
+	public ListOption driftGeneratorsOption = new ListOption("generators", 'g',
             "Generator(s) to use.", new ClassOption("ConceptDriftGenerator", 'g',
 	            "Drift generation method to use.", ConceptDriftGenerator.class, "NoChangeGenerator"),
 	            new Option[0], ',');
@@ -75,6 +79,23 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
 		this.numInstances = 0;
 		this.period = numInstancesConceptOption.getValue();
 	}
+	
+
+    public long estimatedRemainingInstances() {
+        return -1;
+    }
+
+    public InstancesHeader getHeader() {
+        return this.streamHeader;
+    }
+
+    public boolean hasMoreInstances() {
+        return true;
+    }
+
+    public boolean isRestartable() {
+        return true;
+    }
 	
 	protected abstract double[] nextValues();
 	
@@ -105,15 +126,23 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
         	this.setValues(inst, this.nextBinaryValues(nextValues));
         }
         //Ground truth
-        inst.setValue(1, this.getChange() ? 1 : 0);
+        inst.setValue(nextValues.length + 1, this.getChange() ? 1 : 0);
         if (this.getChange() == true) {
             //this.clusterEvents.add(new ClusterEvent(this, this.numInstances, "Change", "Drift"));
         }
-        inst.setValue(2,  nextValues[0]);
+
         return new InstanceExample(inst);
 	}
 	
 	public boolean getChange() {
 		return this.change;
 	}
+
+    public void restart() {
+        this.instanceRandom = new Random(this.instanceRandomSeedOption.getValue());
+    }
+
+    public void getDescription(StringBuilder sb, int indent) {
+        // TODO Auto-generated method stub
+    }
 }
