@@ -55,7 +55,8 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
 	public ListOption driftGeneratorsOption = new ListOption("generators", 'g',
             "Generator(s) to use.", new ClassOption("ConceptDriftGenerator", 'g',
 	            "Drift generation method to use.", ConceptDriftGenerator.class, "NoChangeGenerator"),
-	            new Option[0], ',');
+	            new Option[0], 
+	            ',');
 	
 	public FlagOption notBinaryStreamOption = new FlagOption("notBinaryStream", 'b',
 			"Don't convert to a binary stream of 0 and 1.");
@@ -125,7 +126,7 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
         } else {
         	this.setValues(inst, this.nextBinaryValues(nextValues));
         }
-        //Ground truth
+        //TODO: Ground truth
         inst.setValue(nextValues.length + 1, this.getChange() ? 1 : 0);
         if (this.getChange() == true) {
             //this.clusterEvents.add(new ClusterEvent(this, this.numInstances, "Change", "Drift"));
