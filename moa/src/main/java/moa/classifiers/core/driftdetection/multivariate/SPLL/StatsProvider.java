@@ -1,10 +1,8 @@
 package moa.classifiers.core.driftdetection.multivariate.SPLL;
 
-import java.util.List;
+import java.io.Serializable;
 
-import com.yahoo.labs.samoa.instances.Instance;
-
-public interface StatsProvider {
+public interface StatsProvider extends Serializable {
 	public double[] featureWiseVariance(double[][] data);
 	
 	public double cumulativeProbability(double x, int df);

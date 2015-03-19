@@ -1,5 +1,6 @@
 package moa.classifiers.core.driftdetection.multivariate.SPLL;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,8 +14,9 @@ import java.util.List;
  * 
  * @author Will Faithfull (w.faithfull@bangor.ac.uk)
  */
-public class SPLL {
-	
+public class SPLL implements Serializable {
+
+	private static final long serialVersionUID = -4540096516645810388L;
 	// These are the values we tend to use.
 	private final int DEFAULT_MAX_ITERATIONS = 100;
 	private final int DEFAULT_N_CLUSTERS = 3;
