@@ -72,6 +72,12 @@ public class ListOption extends AbstractOption {
         this.currentList = cliStringToOptionArray(s, this.separatorChar,
                 this.expectedType);
     }
+    
+    public Option getExpectedType() {
+    	// This is necessary for @see com.github.javacliparser.gui.ListOptionEditComponent
+    	// in order to enforce single-type option lists, which is quite important.
+    	return this.expectedType;
+    }
 
     public static Option[] cliStringToOptionArray(String s, char separator,
             Option expectedType) {
