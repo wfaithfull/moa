@@ -52,12 +52,7 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
             "instanceRandomSeed", 'i',
             "Seed for random generation of instances.", 1);
 	
-	public ListOption driftGeneratorsOption = new ListOption("generators", 'g',
-            "Generator(s) to use.", new ClassOption("ConceptDriftGenerator", 'g',
-	            "Drift generation method to use.", ConceptDriftGenerator.class, "NoChangeGenerator"),
-	            new Option[0], 
-	            ',');
-	
+
 	public FlagOption notBinaryStreamOption = new FlagOption("notBinaryStream", 'b',
 			"Don't convert to a binary stream of 0 and 1.");
 

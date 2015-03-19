@@ -1,6 +1,7 @@
 package moa.streams.generators.cd.multivariate;
 
-import com.github.javacliparser.ClassOption;
+import moa.options.ClassOption;
+import com.github.javacliparser.ListOption;
 import com.github.javacliparser.Option;
 
 import moa.options.OptionHandler;
@@ -11,6 +12,13 @@ public class MultivariateDriftGeneratorEnsemble extends AbstractMultivariateConc
 	private static final long serialVersionUID = 2360124636284627056L;
 	private ConceptDriftGenerator[] ensemble;
 	private int dimensions;
+	
+	public ListOption driftGeneratorsOption = new ListOption("generators", 'g',
+            "Generator(s) to use.", new ClassOption("driftgen", 'c',
+	            "Drift generation method to use.", ConceptDriftGenerator.class, "NoChangeGenerator"),
+	            new Option[0], 
+	            ',');
+	
 	
 	public MultivariateDriftGeneratorEnsemble() {
 		
@@ -36,7 +44,7 @@ public class MultivariateDriftGeneratorEnsemble extends AbstractMultivariateConc
 		
 		for(int i=0; i<driftGenerators.length; i++) {
 			// This is rather inelegant, to put it lightly.
-			ensemble[i] = ((ConceptDriftGenerator)((ClassOption)driftGenerators[i]).materializeObject());
+			ensemble[i] = ((ConceptDriftGenerator)((ClassOption)driftGenerators[i]).materializeObject(monitor, repository));
 			
 			if(monitor.taskShouldAbort()) {
 				return;
