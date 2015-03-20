@@ -81,7 +81,7 @@ public class ListOptionEditComponent extends JPanel implements
 		System.out.println(opt.getValueAsCLIString() + opt.getName());
 		JComponent editComponent = OptionsConfigurationPanel.getEditComponent(opt);
 		
-    	JButton delButton = new JButton("X");
+    	JButton delButton = new JButton("Remove");
     	
     	delButton.addActionListener(new ActionListener() {
     		@Override 
