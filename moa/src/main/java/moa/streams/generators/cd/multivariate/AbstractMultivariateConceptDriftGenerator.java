@@ -3,10 +3,12 @@ package moa.streams.generators.cd.multivariate;
 import java.util.ArrayList;
 import java.util.Random;
 
+import moa.core.FastVector;
 import moa.core.InstanceExample;
 import moa.core.ObjectRepository;
 import moa.options.AbstractOptionHandler;
 import moa.options.ClassOption;
+import moa.streams.InstanceStream;
 import moa.streams.clustering.ClusterEvent;
 import moa.streams.generators.cd.ConceptDriftGenerator;
 import moa.tasks.TaskMonitor;
@@ -15,8 +17,10 @@ import com.github.javacliparser.FlagOption;
 import com.github.javacliparser.IntOption;
 import com.github.javacliparser.ListOption;
 import com.github.javacliparser.Option;
+import com.yahoo.labs.samoa.instances.Attribute;
 import com.yahoo.labs.samoa.instances.DenseInstance;
 import com.yahoo.labs.samoa.instances.Instance;
+import com.yahoo.labs.samoa.instances.Instances;
 import com.yahoo.labs.samoa.instances.InstancesHeader;
 
 /*
@@ -24,12 +28,9 @@ import com.yahoo.labs.samoa.instances.InstancesHeader;
  * 
  * Apologies for the mouthful of a class name, but this is Java after all.
  * 
- * Multivariate extension of the equivalent AbstractConceptDriftGenerator. Essentially this
- * is a configurable ensemble of drift generation techniques, so that we can recreate tricky
- * problems with individually drifting features, features drifting at different rates, wildly
- * different means, standard deviation, distribution of the individual features, etc.
+ * Multivariate extension of the equivalent AbstractConceptDriftGenerator.
  * @see AbstractConceptDriftGenerator
- * @author Will Faithfull (w.faithfull@bangor.ac.uk)
+ * @author Will Faithfull (w.faithfull@bangor.ac.uk) (will@sourcepulp.com)
  */
 public abstract class AbstractMultivariateConceptDriftGenerator extends AbstractOptionHandler implements ConceptDriftGenerator  {
 
@@ -59,6 +60,9 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
 	public IntOption numInstancesConceptOption = new IntOption("numInstancesConcept", 'p',
 			"The number of instances for each concept.", 500, 0, Integer.MAX_VALUE);
 	
+	public IntOption numFeaturesOption = new IntOption("numFeatures", 'f',
+			"The dimensionality of this stream", 1, 1, Integer.MAX_VALUE);
+	
 	protected InstancesHeader streamHeader;
 	
 	protected Random instanceRandom;
@@ -69,11 +73,36 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
 	
 	protected boolean change;
 	
+	protected boolean[] featureWiseChange;
+	
 	@Override
 	protected void prepareForUseImpl(TaskMonitor monitor,
 			ObjectRepository repository) {
 		this.numInstances = 0;
 		this.period = numInstancesConceptOption.getValue();
+		
+		// generate header
+        FastVector attributes = new FastVector();
+
+        FastVector binaryLabels = new FastVector();
+        binaryLabels.addElement("0");
+        binaryLabels.addElement("1");
+
+        for(int i=0;i<this.numFeaturesOption.getValue();i++) {
+            if (!this.notBinaryStreamOption.isSet()) {
+                attributes.addElement(new Attribute("feature_" + i, binaryLabels));
+            } else {
+                attributes.addElement(new Attribute("feature_" + i));
+            }               
+        }
+        // Ground Truth
+        attributes.addElement(new Attribute("change", binaryLabels));
+        attributes.addElement(new Attribute("ground truth input"));
+
+        this.streamHeader = new InstancesHeader(new Instances(
+                getCLICreationString(InstanceStream.class), attributes, 0));
+        this.streamHeader.setClassIndex(this.streamHeader.numAttributes() - 1);
+
 	}
 	
 
@@ -121,7 +150,15 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
         } else {
         	this.setValues(inst, this.nextBinaryValues(nextValues));
         }
-        //TODO: Ground truth
+        // Ground truth
+        for(boolean gt : this.featureWiseChange) {
+        	// TODO: this may be naive, or deserve to be abstracted into
+        	// TODO: a strategy pattern. 
+        	if(gt) {
+        		this.change = true;
+        		break;
+        	}
+        }
         inst.setValue(nextValues.length + 1, this.getChange() ? 1 : 0);
         if (this.getChange() == true) {
             //this.clusterEvents.add(new ClusterEvent(this, this.numInstances, "Change", "Drift"));
