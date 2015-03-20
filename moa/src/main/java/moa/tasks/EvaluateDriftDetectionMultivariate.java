@@ -1,10 +1,15 @@
 package moa.tasks;
 
+import com.github.javacliparser.IntOption;
+import com.yahoo.labs.samoa.instances.Instance;
+
 import moa.classifiers.core.driftdetection.multivariate.MultivariateChangeDetector;
+import moa.core.Example;
 import moa.core.ObjectRepository;
 import moa.evaluation.LearningPerformanceEvaluator;
 import moa.options.ClassOption;
 import moa.streams.InstanceStream;
+import moa.streams.generators.cd.ConceptDriftGenerator;
 import moa.streams.generators.cd.multivariate.AbstractMultivariateConceptDriftGenerator;
 
 public class EvaluateDriftDetectionMultivariate extends ConceptDriftMainTask {
@@ -31,10 +36,8 @@ public class EvaluateDriftDetectionMultivariate extends ConceptDriftMainTask {
             LearningPerformanceEvaluator.class,
             "BasicConceptDriftPerformanceEvaluator");
     
-    public EvaluateDriftDetectionMultivariate() {
-		// TODO Auto-generated constructor stub
-	}
-	
+    public IntOption instanceLimitOption = new IntOption("numInstances", 'n', "The number of instances to generate", 1000);
+    
 	@Override
 	public Class<?> getTaskResultType() {
 		// TODO Auto-generated method stub
@@ -43,6 +46,19 @@ public class EvaluateDriftDetectionMultivariate extends ConceptDriftMainTask {
 
 	@Override
 	protected Object doMainTask(TaskMonitor monitor, ObjectRepository repository) {
+		
+		// Materialise class options
+		MultivariateChangeDetector cd 				= (MultivariateChangeDetector) this.getPreparedClassOption(ddmOption);
+		ConceptDriftGenerator stream 				= (ConceptDriftGenerator) this.getPreparedClassOption(streamOption);
+		LearningPerformanceEvaluator<?> evaluator 	= (LearningPerformanceEvaluator<?>) this.getPreparedClassOption(evaluatorOption);
+		
+		int count = 0;
+		while(count++ < instanceLimitOption.getValue()) {
+			// TODO: Set monitor
+			Example<Instance> next = stream.nextInstance();
+			cd.input(next.getData());
+			// TODO: Evaluator
+		}
 		// TODO Auto-generated method stub
 		return null;
 	}
