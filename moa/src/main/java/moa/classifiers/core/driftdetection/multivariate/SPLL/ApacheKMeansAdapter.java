@@ -8,7 +8,9 @@ import org.apache.commons.math3.ml.clustering.Clusterable;
 import org.apache.commons.math3.ml.clustering.KMeansPlusPlusClusterer;
 
 public class ApacheKMeansAdapter implements ClusterProvider {
-	
+
+	private static final long serialVersionUID = -7012522276632821253L;
+
 	private final class DoubleAdapter implements Clusterable {
 
 		private double[] inst;

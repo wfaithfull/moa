@@ -7,6 +7,7 @@ import org.apache.commons.math3.stat.descriptive.moment.Variance;
 
 public class ApacheStatsAdapter implements StatsProvider {
 	
+	private static final long serialVersionUID = 7090871316499904236L;
 	Variance v;
 	
 	public ApacheStatsAdapter()

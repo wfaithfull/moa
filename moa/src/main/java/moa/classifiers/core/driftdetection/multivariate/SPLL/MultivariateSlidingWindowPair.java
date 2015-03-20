@@ -1,13 +1,15 @@
 package moa.classifiers.core.driftdetection.multivariate.SPLL;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.PriorityQueue;
 import java.util.Queue;
 
 import com.yahoo.labs.samoa.instances.Instance;
 
-public class MultivariateSlidingWindowPair {
-	
+public class MultivariateSlidingWindowPair implements Serializable {
+
+	private static final long serialVersionUID = 211852219984361142L;
 	private Queue<Instance> window_1;
 	private Queue<Instance> window_2;
 	
