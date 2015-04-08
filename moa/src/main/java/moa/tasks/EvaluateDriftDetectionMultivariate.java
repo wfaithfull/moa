@@ -47,6 +47,8 @@ public class EvaluateDriftDetectionMultivariate extends ConceptDriftMainTask {
 	@Override
 	protected Object doMainTask(TaskMonitor monitor, ObjectRepository repository) {
 		
+		this.prepareClassOptions(monitor, repository);
+		
 		// Materialise class options
 		MultivariateChangeDetector cd 				= (MultivariateChangeDetector) this.getPreparedClassOption(ddmOption);
 		ConceptDriftGenerator stream 				= (ConceptDriftGenerator) this.getPreparedClassOption(streamOption);
@@ -62,5 +64,7 @@ public class EvaluateDriftDetectionMultivariate extends ConceptDriftMainTask {
 		// TODO Auto-generated method stub
 		return null;
 	}
+	
+	
 
 }
