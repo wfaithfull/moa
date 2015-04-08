@@ -18,8 +18,8 @@ public class SPLL implements Serializable {
 
 	private static final long serialVersionUID = -4540096516645810388L;
 	// These are the values we tend to use.
-	private final int DEFAULT_MAX_ITERATIONS = 100;
-	private final int DEFAULT_N_CLUSTERS = 3;
+	private final static int DEFAULT_MAX_ITERATIONS = 100;
+	private final static int DEFAULT_N_CLUSTERS = 3;
 	
 	// But you can change them if you disagree.
 	private int maxIterations;
@@ -39,7 +39,7 @@ public class SPLL implements Serializable {
 	
 	public SPLL() {
 		// We use K-Means and Chi Square.
-		this(new ApacheKMeansAdapter(), new ApacheStatsAdapter());
+		this(new ApacheKMeansAdapter(DEFAULT_N_CLUSTERS, DEFAULT_MAX_ITERATIONS), new ApacheStatsAdapter());
 	}
 	
 	private List<double[]> getClusterVariance(List<double[][]> clusters) {
@@ -53,10 +53,12 @@ public class SPLL implements Serializable {
 		return clusterVariance;
 	}
 	
+	
 	private List<double[]> getClusterMeans(List<double[][]> clusters) {
 		List<double[]> clusterMeans = new ArrayList<double[]>();
 		
 		for(int i=0;i<clusters.size(); i++){
+
 			double[][] cluster = clusters.get(i);
 			int nObsv		= cluster.length;
 			int nFeatures 	= cluster[0].length;
@@ -101,7 +103,7 @@ public class SPLL implements Serializable {
 	
 	public LikelihoodResult logLL(double[][] w1, double[][] w2)
 	{
-		List<double[][]> clusters = getClusterer().cluster(w1, numClusters, maxIterations);
+		List<double[][]> clusters = getClusterer().cluster(w1);
 		
     	int totalObservations   = w1.length;
         int nFeatures           = w1[0].length;	
