@@ -27,7 +27,7 @@ public class SPLLTest {
 	@Test
 	public void testSPLLClusterProviderCumulativeDistributionFunctionProvider() {
 		
-		ClusterProvider km = new ApacheKMeansAdapter();
+		ClusterProvider km = new ApacheKMeansAdapter(3,100);
 		StatsProvider stats = new ApacheStatsAdapter();
 		
 		SPLL spll = new SPLL(km, stats);
