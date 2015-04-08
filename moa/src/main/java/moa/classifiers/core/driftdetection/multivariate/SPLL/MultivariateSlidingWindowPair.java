@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Collection;
 import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import com.yahoo.labs.samoa.instances.Instance;
 
@@ -19,8 +20,8 @@ public class MultivariateSlidingWindowPair implements Serializable {
 	public MultivariateSlidingWindowPair(WindowStrategy strategy, int windowSize) {
 		this.setStrategy(strategy);
 		this.setWindowSize(windowSize);
-		this.window_1 = new PriorityQueue<Instance>();
-		this.window_2 = new PriorityQueue<Instance>();
+		this.window_1 = new ArrayBlockingQueue<Instance>(windowSize);
+		this.window_2 = new ArrayBlockingQueue<Instance>(windowSize);
 	}
 	
 	public enum WindowStrategy {
