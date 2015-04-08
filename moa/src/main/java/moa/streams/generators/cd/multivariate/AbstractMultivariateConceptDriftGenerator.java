@@ -97,12 +97,13 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
         }
         // Ground Truth
         attributes.addElement(new Attribute("change", binaryLabels));
-        attributes.addElement(new Attribute("ground truth input"));
+        //attributes.addElement(new Attribute("ground truth input"));
 
         this.streamHeader = new InstancesHeader(new Instances(
                 getCLICreationString(InstanceStream.class), attributes, 0));
         this.streamHeader.setClassIndex(this.streamHeader.numAttributes() - 1);
 
+        this.featureWiseChange = new boolean[this.numFeaturesOption.getValue()];
 	}
 	
 
@@ -134,7 +135,8 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
 	}
 	
 	private void setValues(Instance inst, double[] values) {
-		for(int i=0;i<inst.numAttributes();i++) {
+		int nAttr = inst.numAttributes() - 1;
+		for(int i=0;i<nAttr;i++) {
 			inst.setValue(i, values[i]);
 		}
 	}
@@ -142,6 +144,7 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
 	public InstanceExample nextInstance() {
         this.numInstances++;
         InstancesHeader header = getHeader();
+        
         Instance inst = new DenseInstance(header.numAttributes());
         inst.setDataset(header);
         double[] nextValues = this.nextValues();
@@ -159,7 +162,8 @@ public abstract class AbstractMultivariateConceptDriftGenerator extends Abstract
         		break;
         	}
         }
-        inst.setValue(nextValues.length + 1, this.getChange() ? 1 : 0);
+        //System.out.println(inst.n);
+        inst.setValue(inst.numAttributes() - 1, this.getChange() ? 1 : 0);
         if (this.getChange() == true) {
             //this.clusterEvents.add(new ClusterEvent(this, this.numInstances, "Change", "Drift"));
         }
