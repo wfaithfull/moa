@@ -8,6 +8,6 @@ import java.util.List;
  */
 public interface ClusterProvider extends Serializable {
 
-    List<double[][]> cluster(double[][] data, int k, int maxIterations);
+    List<double[][]> cluster(double[][] data);
 
 }
